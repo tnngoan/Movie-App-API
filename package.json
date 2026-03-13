@@ -2,6 +2,7 @@
   "name": "movie_api",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://tnngoan.github.io/Movie-App-API",
   "dependencies": {
     "@material-ui/core": "^4.10.0",
     "@material-ui/icons": "^4.9.1",
@@ -20,9 +21,14 @@
     "react-modal": "^3.11.2",
     "react-scripts": "3.4.1"
   },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  },
   "scripts": {
+    "predeploy": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
