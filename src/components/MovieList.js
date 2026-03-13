@@ -2,19 +2,32 @@ import React from "react";
 import MovieCard from "./MovieCard";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-export default function MovieList(props) {
-  if (props.movieList == null) {
+export default function MovieList({ movieList, genreList, loading }) {
+  if (loading) {
     return (
-      <div>
-        <h1>loading...</h1>
+      <div className="d-flex justify-content-center" style={{ width: "100%" }}>
+        <h2 style={{ color: "white" }}>Loading movies...</h2>
       </div>
     );
   }
-  return (
-      <div className="row m-0 p-0 d-flex justify-content-center">
-        {props.movieList.map((item) => {
-          return <MovieCard openModal={props.openModal} movie={item} genreListMovieList={props.genresListApp} />;
-        })}
+
+  if (!movieList || movieList.length === 0) {
+    return (
+      <div className="d-flex justify-content-center" style={{ width: "100%" }}>
+        <h2 style={{ color: "white" }}>No movies found</h2>
       </div>
+    );
+  }
+
+  return (
+    <div className="row m-0 p-0 d-flex justify-content-center">
+      {movieList.map((item) => (
+        <MovieCard
+          key={item.id}
+          movie={item}
+          genreListMovieList={genreList}
+        />
+      ))}
+    </div>
   );
 }

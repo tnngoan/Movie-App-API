@@ -1,86 +1,79 @@
 import React, { useState } from "react";
-import { Card, Badge, Button, ImgOverlay, CardDeck } from "react-bootstrap";
+import { Card, Badge, Button } from "react-bootstrap";
 import ReactModal from "react-modal";
 import YouTube from "@u-wave/react-youtube";
 import Rating from "@material-ui/lab/Rating";
 import Box from "@material-ui/core/Box";
-// import Typography from "@material-ui/core/Typography";
-const apiKey = process.env.REACT_APP_APIKEY;
+import { fetchMovieTrailer } from "../services/api";
+import "./MovieCard.css";
 
-export default function MovieCard(props) {
-  let movie = props.movie;
-  let genres = props.genreListMovieList;
-  let [discriptionOpen, setDiscriptionOpen] = useState(false);
-  let [modalOpen, setModalOpen] = useState(false);
-  let [id, setId] = useState(null);
-
-  const showDiscription = () => {};
+export default function MovieCard({ movie, genreListMovieList: genres }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [videoId, setVideoId] = useState(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [trailerError, setTrailerError] = useState(false);
 
   const closeModal = () => {
     setModalOpen(false);
+    setVideoId(null);
+    setTrailerError(false);
   };
 
-  const openModal = (idd) => {
+  const openModal = async (movieId) => {
     setModalOpen(true);
-    const getVideo = async () => {
-      const url = `https://api.themoviedb.org/3/movie/${idd}/videos?api_key=${apiKey}&language=en-US`;
-      let data = await fetch(url);
-      let result = await data.json();
-      console.log("I wanna p", result.results[0].key);
-      setId(result.results[0].key);
-    };
-    getVideo();
+    setTrailerError(false);
+    try {
+      const key = await fetchMovieTrailer(movieId);
+      if (key) {
+        setVideoId(key);
+      } else {
+        setTrailerError(true);
+      }
+    } catch {
+      setTrailerError(true);
+    }
   };
+
+  const posterSrc = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w300_and_h450_bestv2${movie.poster_path}`
+    : "https://via.placeholder.com/300x450?text=No+Image";
 
   return (
     <div className="mt-5">
       <Card className="mt-5 container imgSize titleLine">
-        <Card.Img
-          className="hoverImg"
-          variant="top"
-          rn
-          src={`https://image.tmdb.org/t/p/w300_and_h450_bestv2${movie.poster_path}`}
-        />
+        <Card.Img className="hoverImg" variant="top" src={posterSrc} />
 
-        <Card.ImgOverlay className="hiddenContent pb-0">
+        <Card.ImgOverlay
+          className={`hiddenContent pb-0 ${showOverlay ? "showOverlay" : ""}`}
+        >
           <Card.Title className="font-weight-bolder">{movie.title}</Card.Title>
           <Card.Text className="font-weight-lighter">
             {movie.genre_ids.map((id) => {
-              let test = genres.find((genre) => {
-                return id === genre.id;
-              }).name;
-              // console.log("test", test);
+              const found = genres.find((genre) => id === genre.id);
               return (
-                <Badge className="mr-2" variant="danger">
-                  {test}
+                <Badge key={id} className="mr-2" variant="danger">
+                  {found ? found.name : "Unknown"}
                 </Badge>
               );
             })}
           </Card.Text>
-          <Card.Text className='description'>
-          {movie.overview}
-          </Card.Text>
+          <Card.Text className="description">{movie.overview}</Card.Text>
         </Card.ImgOverlay>
 
         <Card.Body>
           <div className="d-flex justify-content-around align-baseline">
-            {" "}
             <Box component="fieldset" mb={3} borderColor="transparent">
-              {/* <Typography component="legend">Read only</Typography> */}
               <Rating
-                name="read-only"
+                name={`rating-${movie.id}`}
                 value={movie.vote_average / 2}
                 readOnly
               />
             </Box>
-            <Card.Text data-spy="scroll"> {movie.vote_average / 2} </Card.Text>
+            <Card.Text>{(movie.vote_average / 2).toFixed(1)}</Card.Text>
           </div>
-          {/* <Card.Title className="cardbody">{movie.title}</Card.Title> */}
           <Button
             className="float-left"
-            onClick={() => {
-              openModal(movie.id);
-            }}
+            onClick={() => openModal(movie.id)}
             variant="outline-danger"
           >
             Trailer
@@ -88,14 +81,13 @@ export default function MovieCard(props) {
           <Button
             className="float-right"
             variant="outline-danger"
-            onClick={() => {
-              showDiscription();
-            }}
+            onClick={() => setShowOverlay(!showOverlay)}
           >
-            Discription
+            Description
           </Button>
         </Card.Body>
       </Card>
+
       <ReactModal
         className="ml-5"
         style={{
@@ -125,34 +117,27 @@ export default function MovieCard(props) {
         isOpen={modalOpen}
       >
         <div className="d-flex align-baseline modalBox">
-          <YouTube
-            width="100%"
-            height="85%"
-            className="col-9"
-            video={id}
-            autoplay
-          />
+          {trailerError ? (
+            <div className="col-9 d-flex align-items-center justify-content-center">
+              <h3 style={{ color: "white" }}>Trailer unavailable</h3>
+            </div>
+          ) : (
+            <YouTube
+              width="100%"
+              height="85%"
+              className="col-9"
+              video={videoId}
+              autoplay
+            />
+          )}
           <div className="col-3 align-baseline">
-            {" "}
             <div className="align-bottom">
               <Button
-                pointer-events="none"
                 className="float-right"
                 variant="outline-danger"
-                onClick={() => {
-                  closeModal();
-                }}
+                onClick={closeModal}
               >
                 x
-              </Button>
-              <Button
-                className="float-right mr-3"
-                variant="outline-danger"
-                onClick={() => {
-                  console.log("let's watch movies");
-                }}
-              >
-                Watch
               </Button>
             </div>
           </div>
